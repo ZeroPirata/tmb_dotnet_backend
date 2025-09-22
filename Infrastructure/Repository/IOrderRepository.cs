@@ -15,7 +15,6 @@ public class OrderRepository(ApplicationDbContext context) : IOrderRepository
     public async Task<Order> AddAsync(Order order)
     {
 
-        // 1. Cria o primeiro registro de histórico para o estado "Pendente"
         var initialHistory = new OrderStatusHistory
         {
             Order = order,
@@ -23,13 +22,9 @@ public class OrderRepository(ApplicationDbContext context) : IOrderRepository
             ChangedAt = DateTime.UtcNow
         };
 
-        // 2. Adiciona tanto o pedido quanto o histórico inicial ao DbContext
         await _context.Orders.AddAsync(order);
         await _context.OrderStatusHistories.AddAsync(initialHistory);
-
-        // 3. Salva AMBOS no banco de dados em uma única transação
         await _context.SaveChangesAsync();
-
         return order;
     }
 

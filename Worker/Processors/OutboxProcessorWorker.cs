@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TMB.Challenge.Application.Interfaces;
-using TMB.Challenge.Infrastructure.Data; // Precisa do DbContext
+using TMB.Challenge.Infrastructure.Data;
 
 namespace TMB.Challenge.Worker.Processors;
 
@@ -16,7 +16,7 @@ public class OutboxProcessorWorker(
         while (!stoppingToken.IsCancellationRequested)
         {
             await ProcessOutboxMessages(stoppingToken);
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Espera 10s
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
     }
 

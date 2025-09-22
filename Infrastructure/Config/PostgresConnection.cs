@@ -3,16 +3,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace TMB.Challenge.Infrastructure.Config;
 
-/// <summary>
-/// Classe para acessar as configurações do PostgreSQL.
-/// </summary>
 public class PostgresConnection(IConfiguration config)
 {
     private readonly IConfiguration _config = config;
 
-    /// <summary>
-    /// Gera a string de conexão com o banco de dados PostgreSQL usando as configurações fornecidas.
-    /// </summary>
     public string GetConnectionString()
     {
         string? port = _config["POSTGRES_PORT"];

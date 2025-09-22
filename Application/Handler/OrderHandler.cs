@@ -80,9 +80,6 @@ public class OrderHandler(IOrderRepository repository, ILogger<OrderHandler> log
         });
     }
 
-    /// <summary>
-    /// Processa um pedido recebido da fila.
-    /// </summary>
     public async Task ProcessOrderFromQueue(OrderMessageDTO message)
     {
         var order = await _repository.GetByUuidAsync(message.Uuid);
@@ -133,7 +130,6 @@ public class OrderHandler(IOrderRepository repository, ILogger<OrderHandler> log
                 ChangedAt = DateTime.UtcNow
             });
             await _repository.UpdateAsync(order);
-            _logger.LogInformation("Status do pedido {Uuid} atualizado para 'Finalizado' no banco.", order.Uuid);
             var finalOrder = await _repository.GetByUuidAsync(message.Uuid);
             var finalPayload = new
             {
@@ -148,7 +144,6 @@ public class OrderHandler(IOrderRepository repository, ILogger<OrderHandler> log
                 })
             };
             await _messageBusService.PublishMessageAsync(finalPayload, "order-status-updates");
-            _logger.LogInformation("Notificação de status 'Finalizado' enviada para {Uuid}.", order.Uuid);
         }
         catch (Exception ex)
         {
