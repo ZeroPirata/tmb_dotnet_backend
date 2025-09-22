@@ -100,43 +100,41 @@ public class OrderHandler(IOrderRepository repository, ILogger<OrderHandler> log
 
         try
         {
-            // --- ATUALIZAÇÃO PARA "PROCESSANDO" ---
             order.Status = OrderStatus.Processando;
+            await _repositoryStatusHistory.AddAsync(new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                PreviousStatus = OrderStatus.Pendente,
+                NewStatus = OrderStatus.Processando,
+                ChangedAt = DateTime.UtcNow
+            });
             await _repository.UpdateAsync(order);
-            _logger.LogInformation("Status do pedido {Uuid} atualizado para 'Processando' no banco.", order.Uuid);
-
-            // Busca o pedido ATUALIZADO com o histórico mais recente
             var updatedOrderForProcessing = await _repository.GetByUuidAsync(message.Uuid);
-
-            // CORREÇÃO: Cria um payload anônimo formatando a data corretamente
             var processingPayload = new
             {
                 Uuid = updatedOrderForProcessing?.Uuid,
                 Status = updatedOrderForProcessing?.Status.ToString(),
-                // Usamos .Select() para criar um novo objeto com a data no formato ISO 8601
                 StatusHistories = updatedOrderForProcessing?.StatusHistories.Select(h => new
                 {
                     h.Id,
                     h.PreviousStatus,
                     h.NewStatus,
-                    // A formatação "o" garante compatibilidade com JavaScript
                     ChangedAt = h.ChangedAt.ToString("o")
                 })
             };
             await _messageBusService.PublishMessageAsync(processingPayload, "order-status-updates");
-            _logger.LogInformation("Notificação de status 'Processando' enviada para {Uuid}.", order.Uuid);
-
             await Task.Delay(5000);
-
-            // --- ATUALIZAÇÃO PARA "FINALIZADO" ---
             order.Status = OrderStatus.Finalizado;
+            await _repositoryStatusHistory.AddAsync(new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                PreviousStatus = OrderStatus.Processando,
+                NewStatus = OrderStatus.Finalizado,
+                ChangedAt = DateTime.UtcNow
+            });
             await _repository.UpdateAsync(order);
             _logger.LogInformation("Status do pedido {Uuid} atualizado para 'Finalizado' no banco.", order.Uuid);
-
-            // Busca o pedido FINAL com o histórico completo
             var finalOrder = await _repository.GetByUuidAsync(message.Uuid);
-
-            // CORREÇÃO: Formata o payload final da mesma forma
             var finalPayload = new
             {
                 Uuid = finalOrder?.Uuid,
